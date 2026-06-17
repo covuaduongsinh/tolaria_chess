@@ -13,10 +13,12 @@ import {
 } from './fileAttachmentMarkdown'
 import { restoreMarkdownHighlightsInBlocks } from './markdownHighlightMarkdown'
 import { serializeMathAwareBlocks } from './mathMarkdown'
+import { chessMarkdownCodec } from './chessMarkdown'
 import { mermaidMarkdownCodec } from './mermaidMarkdown'
 import { tldrawMarkdownCodec } from './tldrawMarkdown'
 
 const EDITOR_DURABLE_MARKDOWN_CODECS = [
+  chessMarkdownCodec,
   mermaidMarkdownCodec,
   tldrawMarkdownCodec,
 ] as const

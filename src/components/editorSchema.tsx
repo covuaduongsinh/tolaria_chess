@@ -23,6 +23,7 @@ import { resolveEntry } from '../utils/wikilink'
 import { MATH_BLOCK_TYPE, MATH_INLINE_TYPE, renderMathToHtml } from '../utils/mathMarkdown'
 import { MERMAID_BLOCK_TYPE, mermaidFenceSource } from '../utils/mermaidMarkdown'
 import { TLDRAW_BLOCK_TYPE, TLDRAW_DEFAULT_HEIGHT } from '../utils/tldrawMarkdown'
+import { CHESS_BLOCK_TYPE, CHESS_DEFAULT_ORIENTATION } from '../utils/chessMarkdown'
 import { MARKDOWN_HIGHLIGHT_STYLE } from '../utils/markdownHighlightMarkdown'
 import type { VaultEntry } from '../types'
 import { createTolariaCodeBlockOptions } from './codeBlockOptions'
@@ -30,6 +31,7 @@ import { NoteTitleIcon } from './NoteTitleIcon'
 import { MermaidDiagram } from './MermaidDiagram'
 import { SafeHtmlSpan } from './SafeMarkup'
 import { updateTldrawBlockPropsSafely } from './tldrawBlockProps'
+import { updateChessBlockPropsSafely } from './chessBlockProps'
 import { useExternalMediaPreview } from '../utils/mediaPreviewRuntime'
 import { Textarea } from './ui/textarea'
 import { dispatchRichEditorExternalChange } from './editorExternalChangeEvents'
@@ -40,6 +42,9 @@ import {
 
 const TldrawWhiteboard = lazy(() => import('./TldrawWhiteboard').then(module => ({
   default: module.TldrawWhiteboard,
+})))
+const ChessBlockView = lazy(() => import('./ChessBlockView').then(module => ({
+  default: module.ChessBlockView,
 })))
 type AudioBlockProps = ComponentProps<typeof AudioBlock>
 type VideoBlockProps = ComponentProps<typeof VideoBlock>
@@ -409,11 +414,55 @@ const TldrawBlock = createReactBlockSpec(
   },
 )
 
+const ChessBlock = createReactBlockSpec(
+  {
+    type: CHESS_BLOCK_TYPE,
+    propSchema: {
+      pgn: { default: '' },
+      orientation: { default: CHESS_DEFAULT_ORIENTATION },
+    },
+    content: 'none',
+  },
+  {
+    runsBefore: ['codeBlock'],
+    meta: { selectable: false },
+    render: (props) => (
+      <Suspense fallback={<div className="tolaria-chess tolaria-chess--loading" />}>
+        <ChessBlockView
+          pgn={props.block.props.pgn}
+          orientation={props.block.props.orientation}
+          onPgnChange={(pgn) => {
+            updateChessBlockPropsSafely({
+              blockId: props.block.id,
+              editor: props.editor,
+              nextProps: (currentProps) => ({
+                ...currentProps,
+                pgn,
+              }),
+            })
+          }}
+          onOrientationChange={(orientation) => {
+            updateChessBlockPropsSafely({
+              blockId: props.block.id,
+              editor: props.editor,
+              nextProps: (currentProps) => ({
+                ...currentProps,
+                orientation,
+              }),
+            })
+          }}
+        />
+      </Suspense>
+    ),
+  },
+)
+
 const codeBlock = createCodeBlockSpec(createTolariaCodeBlockOptions())
 const audioBlock = AudioBlockSpec()
 const mathBlock = MathBlock()
 const mermaidBlock = MermaidBlock()
 const tldrawBlock = TldrawBlock()
+const chessBlock = ChessBlock()
 const videoBlock = VideoBlockSpec()
 
 function markdownHighlightElement(): { dom: HTMLElement; contentDOM: HTMLElement } {
@@ -449,6 +498,7 @@ export const schema = BlockNoteSchema.create({
     mathBlock,
     mermaidBlock,
     tldrawBlock,
+    chessBlock,
     codeBlock,
     video: videoBlock,
   },

@@ -14,6 +14,7 @@ import { buildSettingsCommands } from './commands/settingsCommands'
 import { buildAiAgentCommands } from './commands/aiAgentCommands'
 import { buildTypeCommands } from './commands/typeCommands'
 import { buildFilterCommands } from './commands/filterCommands'
+import { buildChessCommands } from './commands/chessCommands'
 import { localizeCommandActions } from './commands/localizeCommands'
 import { extractVaultTypes } from '../utils/vaultTypes'
 import type { GitRepositoryOption } from '../utils/gitRepositories'
@@ -80,6 +81,8 @@ interface CommandRegistryConfig {
   onPastePlainText: () => void
   onOpenSettings: () => void
   onOpenFeedback?: () => void
+  onImportChessGames?: () => void
+  onPlayChess?: () => void
   onOpenVault?: () => void
   onCreateEmptyVault?: () => void
   onAddRemote?: () => void
@@ -307,6 +310,10 @@ export function useCommandRegistry(config: CommandRegistryConfig): import('./com
     () => buildFilterCommands({ isSectionGroup, noteListFilter, onSetNoteListFilter }),
     [isSectionGroup, noteListFilter, onSetNoteListFilter],
   )
+  const chessCommands = useMemo(
+    () => buildChessCommands({ onImportChessGames: config.onImportChessGames, onPlayChess: config.onPlayChess }),
+    [config.onImportChessGames, config.onPlayChess],
+  )
   const commands = useMemo(() => [
     ...navigationCommands,
     ...noteCommands,
@@ -316,9 +323,10 @@ export function useCommandRegistry(config: CommandRegistryConfig): import('./com
     ...aiCommands,
     ...typeCommands,
     ...filterCommands,
+    ...chessCommands,
   ], [
     navigationCommands, noteCommands, gitCommands, viewCommands,
-    settingsCommands, aiCommands, typeCommands, filterCommands,
+    settingsCommands, aiCommands, typeCommands, filterCommands, chessCommands,
   ])
 
   return useMemo(() => localizeCommandActions(commands, locale), [commands, locale])

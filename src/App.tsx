@@ -7,6 +7,10 @@ import { CreateTypeDialog } from './components/CreateTypeDialog'
 import { CreateViewDialog } from './components/CreateViewDialog'
 import { QuickOpenPalette } from './components/QuickOpenPalette'
 import { CommandPalette } from './components/CommandPalette'
+import { ChessImportDialog } from './components/ChessImportDialog'
+import { ChessPlayDialog } from './components/ChessPlayDialog'
+import { runChessGameImport } from './chess/chessGameImport'
+import { fetchOnlineGames } from './chess/chessOnlineImport'
 import { SearchPanel } from './components/SearchPanel'
 import { Toast } from './components/Toast'
 import { CommitDialog } from './components/CommitDialog'
@@ -1411,6 +1415,23 @@ function MainApp({ noteWindowParams }: { noteWindowParams: NoteWindowParams | nu
     void notes.handleRedo()
   }, [notes])
 
+  const handleImportChessGames = useCallback(async (pgn: string) => {
+    const existingFilenames = visibleEntries.map((entry) => entry.filename.replace(/\.md$/iu, ''))
+    const result = await runChessGameImport({
+      pgn,
+      vaultPath: resolvedPath,
+      existingFilenames,
+      createNote: async (note) => {
+        await invoke('create_note_content', { path: note.path, content: note.content, vaultPath: resolvedPath })
+      },
+    })
+    if (result.imported > 0) {
+      await vault.reloadVault()
+      trackEvent('chess_game_imported', { count: result.imported })
+    }
+    return result
+  }, [visibleEntries, resolvedPath, vault])
+
   const commands = useAppCommands({
     activeTabPath: notes.activeTabPath, activeTabPathRef: notes.activeTabPathRef,
     entries: visibleEntries,
@@ -1435,6 +1456,8 @@ function MainApp({ noteWindowParams }: { noteWindowParams: NoteWindowParams | nu
     redoLabel: notes.redoLabel,
     onOpenSettings: handleOpenSettings,
     onOpenFeedback: openFeedback,
+    onImportChessGames: dialogs.openChessImport,
+    onPlayChess: dialogs.openChessPlay,
     onDeleteNote: deleteActions.handleDeleteNote,
     onArchiveNote: entryActions.handleArchiveNote, onUnarchiveNote: entryActions.handleUnarchiveNote,
     onCommitPush: handleCommitPush,
@@ -1741,6 +1764,32 @@ function MainApp({ noteWindowParams }: { noteWindowParams: NoteWindowParams | nu
           onSelectFolder={noteRetargetingUi.selectFolder}
         />
         <CreateViewDialog open={dialogs.showCreateViewDialog} onClose={dialogs.closeCreateView} onCreate={handleCreateOrUpdateView} availableFields={availableFields} locale={appLocale} editingView={dialogs.editingView?.definition ?? null} />
+        <ChessImportDialog
+          open={dialogs.showChessImport}
+          onOpenChange={(open) => { if (!open) dialogs.closeChessImport() }}
+          onImport={handleImportChessGames}
+          onFetch={fetchOnlineGames}
+          formatResult={(result) => translate(appLocale, 'chess.import.result', {
+            imported: result.imported,
+            failedSuffix: result.failed > 0 ? translate(appLocale, 'chess.import.failedSuffix', { failed: result.failed }) : '',
+          })}
+          labels={{
+            title: translate(appLocale, 'chess.import.title'),
+            description: translate(appLocale, 'chess.import.description'),
+            pgnLabel: translate(appLocale, 'chess.import.pgnLabel'),
+            placeholder: translate(appLocale, 'chess.import.placeholder'),
+            importAction: translate(appLocale, 'chess.import.action'),
+            cancel: translate(appLocale, 'chess.import.cancel'),
+            sourcePaste: translate(appLocale, 'chess.import.sourcePaste'),
+            sourceLichess: translate(appLocale, 'chess.import.sourceLichess'),
+            sourceChesscom: translate(appLocale, 'chess.import.sourceChesscom'),
+            username: translate(appLocale, 'chess.import.username'),
+            fetchAction: translate(appLocale, 'chess.import.fetch'),
+            fetchError: translate(appLocale, 'chess.import.fetchError'),
+            fetchEmpty: translate(appLocale, 'chess.import.fetchEmpty'),
+          }}
+        />
+        <ChessPlayDialog open={dialogs.showChessPlay} onOpenChange={(open) => { if (!open) dialogs.closeChessPlay() }} />
         <CommitDialog
           open={commitFlow.showCommitDialog}
           modifiedCount={commitModifiedFiles.length}

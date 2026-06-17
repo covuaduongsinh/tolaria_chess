@@ -11,6 +11,8 @@ export function useDialogs() {
   const [showSearch, setShowSearch] = useState(false)
   const [showConflictResolver, setShowConflictResolver] = useState(false)
   const [showCreateViewDialog, setShowCreateViewDialog] = useState(false)
+  const [showChessImport, setShowChessImport] = useState(false)
+  const [showChessPlay, setShowChessPlay] = useState(false)
   const [editingView, setEditingView] = useState<{ filename: string; definition: ViewDefinition; rootPath?: string } | null>(null)
 
   const openCreateType = useCallback(() => setShowCreateTypeDialog(true), [])
@@ -30,6 +32,10 @@ export function useDialogs() {
   const closeSearch = useCallback(() => setShowSearch(false), [])
   const openConflictResolver = useCallback(() => setShowConflictResolver(true), [])
   const closeConflictResolver = useCallback(() => setShowConflictResolver(false), [])
+  const openChessImport = useCallback(() => setShowChessImport(true), [])
+  const closeChessImport = useCallback(() => setShowChessImport(false), [])
+  const openChessPlay = useCallback(() => setShowChessPlay(true), [])
+  const closeChessPlay = useCallback(() => setShowChessPlay(false), [])
   const openCreateView = useCallback(() => { setEditingView(null); setShowCreateViewDialog(true) }, [])
   const closeCreateView = useCallback(() => { setShowCreateViewDialog(false); setEditingView(null) }, [])
   const openEditView = useCallback((filename: string, definition: ViewDefinition, rootPath?: string) => {
@@ -47,5 +53,7 @@ export function useDialogs() {
     showSearch, openSearch, closeSearch,
     showConflictResolver, openConflictResolver, closeConflictResolver,
     showCreateViewDialog, openCreateView, closeCreateView, editingView, openEditView,
+    showChessImport, openChessImport, closeChessImport,
+    showChessPlay, openChessPlay, closeChessPlay,
   }
 }

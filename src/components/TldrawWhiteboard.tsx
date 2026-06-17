@@ -20,7 +20,8 @@ import {
 } from 'tldraw'
 import 'tldraw/tldraw.css'
 import { useDocumentThemeMode } from '../hooks/useDocumentThemeMode'
-import { resolveEffectiveLocale, translate, type AppLocale } from '../lib/i18n'
+import { useDocumentLocale } from '../hooks/useDocumentLocale'
+import { translate } from '../lib/i18n'
 import type { ResolvedThemeMode } from '../lib/themeMode'
 import {
   isWhiteboardPlatformPermissionRejection,
@@ -108,28 +109,6 @@ function tldrawUserPreferences(themeMode: ResolvedThemeMode): TLUserPreferences 
 
 function ignoreTldrawUserPreferencesUpdate(preferences: TLUserPreferences) {
   void preferences
-}
-
-function readDocumentLocale(): AppLocale {
-  if (typeof document === 'undefined') return 'en'
-  return resolveEffectiveLocale(document.documentElement.lang)
-}
-
-function useDocumentLocale(): AppLocale {
-  const [locale, setLocale] = useState(readDocumentLocale)
-
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-
-    const syncLocale = () => setLocale(readDocumentLocale())
-    const observer = new MutationObserver(syncLocale)
-    observer.observe(document.documentElement, { attributeFilter: ['lang'], attributes: true })
-    syncLocale()
-
-    return () => observer.disconnect()
-  }, [])
-
-  return locale
 }
 
 interface WhiteboardRuntimeGuardOptions {

@@ -27,6 +27,8 @@ const STATIC_LABEL_KEYS: Partial<Record<string, TranslationKey>> = {
   'create-note': 'command.note.newNote',
   'create-note-current-folder': 'command.note.newNoteInCurrentFolder',
   'create-type': 'command.note.newType',
+  'import-chess-games': 'command.note.importChessGames',
+  'play-chess': 'command.note.playChess',
   'save-note': 'command.note.saveNote',
   'paste-plain-text': 'command.note.pastePlainText',
   'find-in-note': 'command.note.findInNote',

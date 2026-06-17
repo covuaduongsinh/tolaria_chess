@@ -19,6 +19,7 @@ import {
   ScribbleLoop,
   Smiley,
   SpeakerHigh,
+  Strategy,
   Table,
   TextHOne,
   TextHTwo,
@@ -33,6 +34,7 @@ import { trackEvent } from '../lib/telemetry'
 import { MATH_BLOCK_TYPE } from '../utils/mathMarkdown'
 import { MERMAID_BLOCK_TYPE, mermaidFenceSource } from '../utils/mermaidMarkdown'
 import { TLDRAW_BLOCK_TYPE, TLDRAW_DEFAULT_HEIGHT } from '../utils/tldrawMarkdown'
+import { CHESS_BLOCK_TYPE, CHESS_DEFAULT_ORIENTATION } from '../utils/chessMarkdown'
 
 type TolariaSlashMenuItem = DefaultReactSuggestionItem & { key: string }
 type TolariaBlockTypeSelectItem = {
@@ -55,6 +57,12 @@ type BlockSlashMenuItemConfig = {
 }
 type TolariaSlashMenuLabels = {
   mathTitle: string
+  chessTitle: string
+}
+
+const DEFAULT_SLASH_MENU_LABELS: TolariaSlashMenuLabels = {
+  mathTitle: 'Math',
+  chessTitle: 'Chess board',
 }
 
 export const MERMAID_SLASH_COMMAND_DIAGRAM = [
@@ -120,6 +128,7 @@ const TOLARIA_SLASH_MENU_ICONS: Partial<Record<string, PhosphorIcon>> = {
   toggle_list: ListBullets,
   video: Video,
   whiteboard: ScribbleLoop,
+  chess: Strategy,
 }
 
 function createBoardId(): string {
@@ -164,7 +173,7 @@ function createMermaidSlashMenuItem(
 
 export function createMathSlashMenuItem(
   editor: Parameters<typeof getDefaultReactSlashMenuItems>[0],
-  labels: TolariaSlashMenuLabels = { mathTitle: 'Math' },
+  labels: TolariaSlashMenuLabels = DEFAULT_SLASH_MENU_LABELS,
 ): TolariaSlashMenuItem {
   return createBlockSlashMenuItem(editor, {
     key: 'math',
@@ -174,6 +183,23 @@ export function createMathSlashMenuItem(
     type: MATH_BLOCK_TYPE,
     props: {
       latex: MATH_SLASH_COMMAND_LATEX,
+    },
+  })
+}
+
+export function createChessSlashMenuItem(
+  editor: Parameters<typeof getDefaultReactSlashMenuItems>[0],
+  labels: TolariaSlashMenuLabels = DEFAULT_SLASH_MENU_LABELS,
+): TolariaSlashMenuItem {
+  return createBlockSlashMenuItem(editor, {
+    key: 'chess',
+    title: labels.chessTitle,
+    aliases: ['pgn', 'game', 'board', 'position'],
+    eventName: 'chess_block_inserted',
+    type: CHESS_BLOCK_TYPE,
+    props: {
+      pgn: '',
+      orientation: CHESS_DEFAULT_ORIENTATION,
     },
   })
 }
@@ -274,6 +300,7 @@ export function getTolariaSlashMenuItems(
       createMermaidSlashMenuItem(editor),
       createMathSlashMenuItem(editor, labels),
       createWhiteboardSlashMenuItem(editor),
+      createChessSlashMenuItem(editor, labels),
     ],
   )
 

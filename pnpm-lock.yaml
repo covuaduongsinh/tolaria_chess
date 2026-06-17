@@ -149,6 +149,12 @@ importers:
       '@tldraw/assets':
         specifier: 4.5.10
         version: 4.5.10
+      chess.js:
+        specifier: ^1.4.0
+        version: 1.4.0
+      chessground:
+        specifier: ^9.2.1
+        version: 9.2.1
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -197,6 +203,9 @@ importers:
       safe-regex2:
         specifier: 5.1.1
         version: 5.1.1
+      stockfish.js:
+        specifier: 10.0.2
+        version: 10.0.2
       tailwind-merge:
         specifier: ^3.4.1
         version: 3.4.1
@@ -3412,6 +3421,13 @@ packages:
   chardet@2.1.1:
     resolution: {integrity: sha512-PsezH1rqdV9VvyNhxxOW32/d75r01NY7TQCmOqomRo15ZSOKbpTFVsfjghxo6JloQUCGnH4k1LGu0R4yCLlWQQ==}
 
+  chess.js@1.4.0:
+    resolution: {integrity: sha512-BBJgrrtKQOzFLonR0l+k64A98NLemPwNsCskwb+29bRwobUa4iTm51E1kwGPbWXAcfdDa18nad6vpPPKPWarqw==}
+
+  chessground@9.2.1:
+    resolution: {integrity: sha512-KIdxm0zD69e62XRwdnFB0XUNYSzn5HM3pMazRCwpfruRUowFI8y+1OAK5YSyBff29myeV1/4o5Q8T191+Irbog==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+
   chevrotain-allstar@0.4.1:
     resolution: {integrity: sha512-PvVJm3oGqrveUVW2Vt/eZGeiAIsJszYweUcYwcskg9e+IubNYKKD+rHHem7A6XVO22eDAL+inxNIGAzZ/VIWlA==}
     peerDependencies:
@@ -5406,6 +5422,9 @@ packages:
   stdin-discarder@0.2.2:
     resolution: {integrity: sha512-UhDfHmA92YAlNnCfhmq0VeNL5bDbiZGg7sZ2IvPsXubGkiNa9EC+tUTsjBRsYUAz87btI6/1wf4XoVvQ3uRnmQ==}
     engines: {node: '>=18'}
+
+  stockfish.js@10.0.2:
+    resolution: {integrity: sha512-treB3AYcdvRJ9SDPOyL0R2NcEAtQgG432nStfRzR4wzVELGQ6iVoeBHwvirHTfocNOTims7XNkK3SADaocsJmQ==}
 
   string-width@4.2.3:
     resolution: {integrity: sha512-wKyQRQpjJ0sIp62ErSZdGsjMJWsap5oRNihHhu6G7JVO/9jIB6UyevL+tXuOqrng8j/cxKTWyWUwvSTriiZz/g==}
@@ -9298,6 +9317,10 @@ snapshots:
 
   chardet@2.1.1: {}
 
+  chess.js@1.4.0: {}
+
+  chessground@9.2.1: {}
+
   chevrotain-allstar@0.4.1(chevrotain@12.0.0):
     dependencies:
       chevrotain: 12.0.0
@@ -11779,6 +11802,8 @@ snapshots:
   std-env@3.10.0: {}
 
   stdin-discarder@0.2.2: {}
+
+  stockfish.js@10.0.2: {}
 
   string-width@4.2.3:
     dependencies:

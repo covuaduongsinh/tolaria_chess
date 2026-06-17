@@ -635,6 +635,19 @@ Defined in `src/utils/durableMarkdownBlocks.ts`, `src/utils/editorDurableMarkdow
 - Mermaid and tldraw both register small codecs with the shared durable fenced-block pipeline; scanner, token, block injection, and mixed serialization mechanics live in one owner.
 - The `/whiteboard` slash command inserts an empty tldraw block using the same Markdown-durable storage path. Preview images are intentionally omitted; thumbnails can be added later as derived cache artifacts.
 
+### Chess Boards
+
+Defined in `src/utils/durableMarkdownBlocks.ts`, `src/utils/editorDurableMarkdown.ts`, `src/utils/chessMarkdown.ts`, `src/components/ChessBlockView.tsx`, `src/components/editorSchema.tsx`, and the reusable board core in `src/chess/` (`chessCore.ts`, `ChessBoard.tsx`, `usePlyNavigation.ts`):
+
+- Fenced `chess` blocks become `chessBlock` schema nodes before BlockNote sees the Markdown body. Each block stores the PGN move text in the fence body plus an `orientation` attribute.
+- `src/chess/chessCore.ts` wraps `chess.js` with DOM-free helpers (parse PGN, per-ply FEN, legal destinations, play move, position status). `ChessBoard` renders the position with `chessground` and reuses these helpers; both are shared by later chess phases (game library, play/train).
+- The block view forwards game edits back into the block props through `updateChessBlockPropsSafely`, re-resolving the live block by id and degrading to a no-op when a reload or mode switch has removed it (same pattern as whiteboards).
+- Moves are only accepted at the live end of the line; reviewing earlier plies is read-only. Navigation state is derived during render (`usePlyNavigation`) so it stays in range as the game grows or shrinks.
+- The `/chess` slash command inserts an empty board using the same Markdown-durable storage path; round-trip through `serializeDurableEditorBlocks()` reproduces the canonical `chess` fence.
+- Engine analysis is opt-in per board (the CPU toggle). `src/chess/engine/` wraps a single-threaded Stockfish WASM worker (vendored in `public/engine/`, from `stockfish.js@10.0.2`): `uci.ts` parses the protocol, `engineClient.ts` owns the worker and a `stop`+`readyok` barrier so rapid position changes never cross-talk, and `useEngineAnalysis` streams a FEN-tagged, White-relative evaluation. While analyzing, the board shows an eval bar plus the best-move arrow (chessground `autoShapes`). The bundled app's CSP allows `wasm-unsafe-eval` and a `worker-src` for the engine.
+- The "Import chess games" command palette action opens `ChessImportDialog`. Pasted PGN flows through pure helpers — `pgnImport.ts` (split a multi-game file, read headers), `chessGameNote.ts` (build typed `Chess Game` frontmatter plus an embedded board), and `chessGameImport.ts` (collision-free names, injected `createNote`) — and each game becomes a vault note via `create_note_content`. Imported games are browsable/searchable through the existing Views and filters by their `chess_*` frontmatter.
+- The "Play chess vs computer" command opens `ChessPlayDialog`, a modal game against Stockfish. `useEngineGame` owns the PGN and plays the engine's reply whenever it is the engine's turn (the human moves their colour on a `ChessBoard` restricted via `playableColor`); the board, rules, and engine client are all reused. Both chess commands are registered through `buildChessCommands` and surface in the command palette — no new app-shell view or `SidebarSelection` kind was needed.
+
 ### Formatting Surface Policy
 
 Defined in `src/components/tolariaEditorFormatting.tsx` and `src/components/tolariaEditorFormattingConfig.ts`:

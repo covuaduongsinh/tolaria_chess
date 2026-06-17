@@ -41,6 +41,8 @@ interface AppCommandsConfig {
   onSave: () => void
   onOpenSettings: () => void
   onOpenFeedback?: () => void
+  onImportChessGames?: () => void
+  onPlayChess?: () => void
   onDeleteNote: (path: string) => void
   onArchiveNote: (path: string) => void
   onUnarchiveNote: (path: string) => void
@@ -177,6 +179,8 @@ type CommandRegistryCoreActions = Pick<
   | 'onPastePlainText'
   | 'onOpenSettings'
   | 'onOpenFeedback'
+  | 'onImportChessGames'
+  | 'onPlayChess'
   | 'onDeleteNote'
   | 'onArchiveNote'
   | 'onUnarchiveNote'
@@ -484,6 +488,8 @@ function createCommandRegistryCoreConfig(
     redoLabel: config.redoLabel,
     onOpenSettings: config.onOpenSettings,
     onOpenFeedback: config.onOpenFeedback,
+    onImportChessGames: config.onImportChessGames,
+    onPlayChess: config.onPlayChess,
     onDeleteNote: config.onDeleteNote,
     onArchiveNote: config.onArchiveNote,
     onUnarchiveNote: config.onUnarchiveNote,

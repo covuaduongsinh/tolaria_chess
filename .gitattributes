@@ -1,0 +1,7 @@
+# Git hooks and Chunk sidecar scripts are executed by bash. Force LF so Windows
+# checkouts (core.autocrlf=true) cannot break them with CRLF line endings — a
+# CRLF turns `set -euo pipefail` into `set -euo pipefail\r`, which bash rejects
+# as "set: pipefail: invalid option name".
+.husky/** text eol=lf
+.chunk/** text eol=lf
+*.sh text eol=lf

@@ -11,12 +11,12 @@ import {
 } from '@codemirror/view'
 import { EditorState, Prec } from '@codemirror/state'
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
-import { frontmatterHighlightPlugin, frontmatterHighlightTheme } from '../extensions/frontmatterHighlight'
-import { markdownLanguage } from '../extensions/markdownHighlight'
+import { rawEditorLanguageExtensionsForPath } from '../extensions/rawEditorLanguage'
 import { RUNTIME_STYLE_NONCE } from '../lib/runtimeStyleNonce'
 import { resolveArrowLigatureInput } from '../utils/arrowLigatures'
 import { zoomCursorFix } from '../extensions/zoomCursorFix'
 import { rawEditorTextInputAttributes } from '../lib/nativeTextAssistance'
+import { isInsideMarkdownFence } from '../utils/markdownFences'
 
 const FONT_FAMILY = '"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
 const RAW_EDITOR_COLORS = {
@@ -31,51 +31,11 @@ const RAW_EDITOR_COLORS = {
 const AUTO_TEXT_DIRECTION_LINE = Decoration.line({
   attributes: { dir: 'auto' },
 })
-interface MarkdownFence {
-  character: '`' | '~'
-  length: number
-}
-
 export interface CodeMirrorCallbacks {
   onDocChange: (doc: string) => void
   onCursorActivity: (view: EditorView) => void
   onSave: () => void
   onEscape: () => boolean
-}
-
-function readMarkdownFence(line: string): MarkdownFence | null {
-  const match = /^( {0,3})(`{3,}|~{3,})/.exec(line)
-  if (!match) return null
-
-  const fence = match[2]
-  return {
-    character: fence[0] as MarkdownFence['character'],
-    length: fence.length,
-  }
-}
-
-function isClosingMarkdownFence(line: string, opening: MarkdownFence): boolean {
-  const match = /^( {0,3})(`{3,}|~{3,})[ \t]*$/.exec(line)
-  if (!match) return false
-
-  const fence = match[2]
-  return fence[0] === opening.character && fence.length >= opening.length
-}
-
-function isInsideMarkdownFence(markdownBeforeCursor: string): boolean {
-  const lines = markdownBeforeCursor.split(/\r?\n/)
-  let opening: MarkdownFence | null = null
-
-  for (const line of lines) {
-    if (opening) {
-      if (isClosingMarkdownFence(line, opening)) opening = null
-      continue
-    }
-
-    opening = readMarkdownFence(line)
-  }
-
-  return opening !== null
 }
 
 function buildBaseTheme() {
@@ -216,6 +176,7 @@ export function useCodeMirror(
   containerRef: React.RefObject<HTMLElement | null>,
   content: string,
   callbacks: CodeMirrorCallbacks,
+  sourcePath?: string | null,
 ) {
   const viewRef = useRef<EditorView | null>(null)
   const callbacksRef = useRef(callbacks)
@@ -255,9 +216,7 @@ export function useCodeMirror(
         buildBaseTheme(),
         EditorView.cspNonce.of(RUNTIME_STYLE_NONCE),
         EditorView.contentAttributes.of(rawEditorTextInputAttributes),
-        markdownLanguage(),
-        frontmatterHighlightTheme(),
-        frontmatterHighlightPlugin,
+        rawEditorLanguageExtensionsForPath(sourcePath),
         zoomCursorFix(),
         EditorView.updateListener.of((update) => {
           if (update.docChanged && !externalSyncRef.current) {
@@ -290,7 +249,7 @@ export function useCodeMirror(
       view.destroy()
       viewRef.current = null
     }
-  }, [containerRef])
+  }, [containerRef, sourcePath])
 
   return viewRef
 }

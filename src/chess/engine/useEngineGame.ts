@@ -35,7 +35,7 @@ export function useEngineGame(input: {
   const position = useMemo(() => parseGame(pgn), [pgn])
   const ply = position.moves.length
   const fen = fenAtPly(position, ply)
-  const status = positionStatus(fen)
+  const status = useMemo(() => positionStatus(fen), [fen])
   const engineTurn = !status.isGameOver && status.turn !== playerColor
 
   useEffect(() => {

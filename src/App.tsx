@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { NoteList } from './components/NoteList'
 import { Editor } from './components/Editor'
@@ -7,9 +7,6 @@ import { CreateTypeDialog } from './components/CreateTypeDialog'
 import { CreateViewDialog } from './components/CreateViewDialog'
 import { QuickOpenPalette } from './components/QuickOpenPalette'
 import { CommandPalette } from './components/CommandPalette'
-import { ChessImportDialog } from './components/ChessImportDialog'
-import { ChessPlayDialog } from './components/ChessPlayDialog'
-import { runChessGameImport } from './chess/chessGameImport'
 import { fetchOnlineGames } from './chess/chessOnlineImport'
 import { SearchPanel } from './components/SearchPanel'
 import { Toast } from './components/Toast'
@@ -151,6 +148,15 @@ declare global {
     __mockHandlers?: Record<string, (args: any) => any>
   }
 }
+
+// Chess dialogs pull in chessground + chess.js (and the engine when used); keep
+// them out of the startup bundle and only load them when actually opened.
+const ChessImportDialog = lazy(() => import('./components/ChessImportDialog').then(module => ({
+  default: module.ChessImportDialog,
+})))
+const ChessPlayDialog = lazy(() => import('./components/ChessPlayDialog').then(module => ({
+  default: module.ChessPlayDialog,
+})))
 
 const DEFAULT_SELECTION: SidebarSelection = INBOX_SELECTION
 
@@ -1416,18 +1422,33 @@ function MainApp({ noteWindowParams }: { noteWindowParams: NoteWindowParams | nu
   }, [notes])
 
   const handleImportChessGames = useCallback(async (pgn: string) => {
-    const existingFilenames = visibleEntries.map((entry) => entry.filename.replace(/\.md$/iu, ''))
+    const { runChessGameImport } = await import('./chess/chessGameImport')
+    const existingNotes = visibleEntries.map((entry) => ({
+      stem: entry.filename.replace(/\.md$/iu, ''),
+      title: entry.title,
+      aliases: entry.aliases,
+    }))
+    const existingTypeTitles = visibleEntries
+      .filter((entry) => entry.isA === 'Type')
+      .map((entry) => entry.title)
     const result = await runChessGameImport({
       pgn,
       vaultPath: resolvedPath,
-      existingFilenames,
+      existingNotes,
+      existingTypeTitles,
       createNote: async (note) => {
         await invoke('create_note_content', { path: note.path, content: note.content, vaultPath: resolvedPath })
       },
     })
-    if (result.imported > 0) {
+    if (result.imported + result.entitiesCreated + result.typesCreated > 0) {
       await vault.reloadVault()
-      trackEvent('chess_game_imported', { count: result.imported })
+    }
+    if (result.imported > 0) {
+      trackEvent('chess_game_imported', {
+        count: result.imported,
+        entities_created: result.entitiesCreated,
+        types_created: result.typesCreated,
+      })
     }
     return result
   }, [visibleEntries, resolvedPath, vault])
@@ -1764,32 +1785,40 @@ function MainApp({ noteWindowParams }: { noteWindowParams: NoteWindowParams | nu
           onSelectFolder={noteRetargetingUi.selectFolder}
         />
         <CreateViewDialog open={dialogs.showCreateViewDialog} onClose={dialogs.closeCreateView} onCreate={handleCreateOrUpdateView} availableFields={availableFields} locale={appLocale} editingView={dialogs.editingView?.definition ?? null} />
-        <ChessImportDialog
-          open={dialogs.showChessImport}
-          onOpenChange={(open) => { if (!open) dialogs.closeChessImport() }}
-          onImport={handleImportChessGames}
-          onFetch={fetchOnlineGames}
-          formatResult={(result) => translate(appLocale, 'chess.import.result', {
-            imported: result.imported,
-            failedSuffix: result.failed > 0 ? translate(appLocale, 'chess.import.failedSuffix', { failed: result.failed }) : '',
-          })}
-          labels={{
-            title: translate(appLocale, 'chess.import.title'),
-            description: translate(appLocale, 'chess.import.description'),
-            pgnLabel: translate(appLocale, 'chess.import.pgnLabel'),
-            placeholder: translate(appLocale, 'chess.import.placeholder'),
-            importAction: translate(appLocale, 'chess.import.action'),
-            cancel: translate(appLocale, 'chess.import.cancel'),
-            sourcePaste: translate(appLocale, 'chess.import.sourcePaste'),
-            sourceLichess: translate(appLocale, 'chess.import.sourceLichess'),
-            sourceChesscom: translate(appLocale, 'chess.import.sourceChesscom'),
-            username: translate(appLocale, 'chess.import.username'),
-            fetchAction: translate(appLocale, 'chess.import.fetch'),
-            fetchError: translate(appLocale, 'chess.import.fetchError'),
-            fetchEmpty: translate(appLocale, 'chess.import.fetchEmpty'),
-          }}
-        />
-        <ChessPlayDialog open={dialogs.showChessPlay} onOpenChange={(open) => { if (!open) dialogs.closeChessPlay() }} />
+        {dialogs.showChessImport ? (
+          <Suspense fallback={null}>
+            <ChessImportDialog
+              open={dialogs.showChessImport}
+              onOpenChange={(open) => { if (!open) dialogs.closeChessImport() }}
+              onImport={handleImportChessGames}
+              onFetch={fetchOnlineGames}
+              formatResult={(result) => translate(appLocale, 'chess.import.result', {
+                imported: result.imported,
+                failedSuffix: result.failed > 0 ? translate(appLocale, 'chess.import.failedSuffix', { failed: result.failed }) : '',
+              })}
+              labels={{
+                title: translate(appLocale, 'chess.import.title'),
+                description: translate(appLocale, 'chess.import.description'),
+                pgnLabel: translate(appLocale, 'chess.import.pgnLabel'),
+                placeholder: translate(appLocale, 'chess.import.placeholder'),
+                importAction: translate(appLocale, 'chess.import.action'),
+                cancel: translate(appLocale, 'chess.import.cancel'),
+                sourcePaste: translate(appLocale, 'chess.import.sourcePaste'),
+                sourceLichess: translate(appLocale, 'chess.import.sourceLichess'),
+                sourceChesscom: translate(appLocale, 'chess.import.sourceChesscom'),
+                username: translate(appLocale, 'chess.import.username'),
+                fetchAction: translate(appLocale, 'chess.import.fetch'),
+                fetchError: translate(appLocale, 'chess.import.fetchError'),
+                fetchEmpty: translate(appLocale, 'chess.import.fetchEmpty'),
+              }}
+            />
+          </Suspense>
+        ) : null}
+        {dialogs.showChessPlay ? (
+          <Suspense fallback={null}>
+            <ChessPlayDialog open onOpenChange={(open) => { if (!open) dialogs.closeChessPlay() }} />
+          </Suspense>
+        ) : null}
         <CommitDialog
           open={commitFlow.showCommitDialog}
           modifiedCount={commitModifiedFiles.length}

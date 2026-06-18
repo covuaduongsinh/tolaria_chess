@@ -11,6 +11,8 @@ export interface ChessGameHeaders {
   event: string
   date: string
   eco: string
+  /** Opening name plus variation, combined from the `Opening`/`Variation` tags. */
+  opening: string
 }
 
 export interface ChessGameImport {
@@ -28,6 +30,12 @@ function headerValue(headers: Record<string, string>, key: string): string {
   return value
 }
 
+function readOpening(raw: Record<string, string>): string {
+  return [headerValue(raw, 'Opening'), headerValue(raw, 'Variation')]
+    .filter(Boolean)
+    .join(' ')
+}
+
 function readHeaders(chess: Chess): ChessGameHeaders {
   const raw = chess.getHeaders()
   return {
@@ -37,6 +45,7 @@ function readHeaders(chess: Chess): ChessGameHeaders {
     event: headerValue(raw, 'Event'),
     date: headerValue(raw, 'Date'),
     eco: headerValue(raw, 'ECO'),
+    opening: readOpening(raw),
   }
 }
 
